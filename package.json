@@ -4,11 +4,13 @@
   "description": "Report latency of types-publisher",
   "main": "index.js",
   "scripts": {
-      "check": "tsc",
+    "check": "tsc"
   },
   "author": "Nathan Shively-Sanders (@sandersn)",
   "license": "ISC",
   "dependencies": {
-    "@octokit/rest": "^15.11.2",
+    "@octokit/rest": "^16.0.3",
+    "@types/shelljs": "^0.8.0",
+    "shelljs": "^0.8.3"
   }
 }
