@@ -1,0 +1,14 @@
+{
+  "name": "types-publisher-watchdog",
+  "version": "1.0.0",
+  "description": "Report latency of types-publisher",
+  "main": "index.js",
+  "scripts": {
+      "check": "tsc",
+  },
+  "author": "Nathan Shively-Sanders (@sandersn)",
+  "license": "ISC",
+  "dependencies": {
+    "@octokit/rest": "^15.11.2",
+  }
+}
