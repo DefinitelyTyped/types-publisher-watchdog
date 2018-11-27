@@ -4,10 +4,9 @@ const Gh = require('@octokit/rest')
 var gh = new Gh()
 
 async function main() {
-    console.log(process.env["IMPORTANT"])
     gh.authenticate({
         type: "token",
-        token: fs.readFileSync('/home/nathansa/api.token', { encoding: 'utf-8' })
+        token: process.env["IMPORTANT"] || ""
     })
     const prs = await recentPrs()
     const averageLatency = recentPackages(prs)
