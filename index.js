@@ -9,7 +9,10 @@ async function main() {
         token: fs.readFileSync('/home/nathansa/api.token', { encoding: 'utf-8' })
     })
     const prs = await recentPrs()
-    recentPackages(prs)
+    const averageLatency = recentPackages(prs)
+    if (averageLatency > 1000) {
+        throw new Error("average types-publisher latency was over 1000 seconds");
+    }
     // fs.writeFileSync('/home/nathansa/types-publisher-watchdog/latency.json', JSON.stringify(rows))
 }
 
@@ -64,22 +67,27 @@ async function recentPrs() {
 }
 /** @param {Map<string, Date>} prs */
 function recentPackages(prs) {
-    let sum = 0
-    let count = 0
+    /** @type {Array<[string, number]>} */
+    let latencies = []
     for (const [name, mergeDate] of prs) {
         const publishDate = new Date(sh.exec(`npm info @types/${name} time.modified`, { silent : true }).stdout.trim())
         if (mergeDate > publishDate) {
             console.log(name + ': not published yet; latency so far: ' + (Date.now() - mergeDate.valueOf()) / 1000)
             console.log('    merged:' + mergeDate)
             console.log('    published:' + publishDate)
-            sum += Date.now() - mergeDate.valueOf()
+            latencies.push([name, Date.now() - mergeDate.valueOf()])
         }
         else {
-            console.log(name + ': ' + ((publishDate.valueOf() - mergeDate.valueOf()) / 1000))
-            sum += publishDate.valueOf() - mergeDate.valueOf()
+            latencies.push([name, publishDate.valueOf() - mergeDate.valueOf()])
         }
-        count++
     }
-    console.log('Average: ' + (sum / count / 1000))
+    latencies.sort(([_n1, l1], [_n2, l2]) => l1 === l2 ? 0 : l1 < l2 ? -1 : 1)
+    let sum = 0
+    for (const [name, latency] of latencies) {
+        sum += latency
+        console.log(name + ': ' + (latency / 1000))
+    }
+    console.log('Average: ' + (sum / latencies.length / 1000))
+    return sum / latencies.length / 1000
 }
 main()

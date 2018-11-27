@@ -4,7 +4,8 @@
   "description": "Report latency of types-publisher",
   "main": "index.js",
   "scripts": {
-    "check": "tsc"
+    "build": "tsc",
+    "check": "node index.js"
   },
   "author": "Nathan Shively-Sanders (@sandersn)",
   "license": "ISC",
