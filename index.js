@@ -6,7 +6,7 @@ var gh = new Gh()
 async function main() {
     gh.authenticate({
         type: "token",
-        token: process.env["IMPORTANT"] || ""
+        token: process.env["TYPES_PUBLISHER_WATCHDOG_TOKEN"] || ""
     })
     const prs = await recentPrs()
     const averageLatency = recentPackages(prs)
