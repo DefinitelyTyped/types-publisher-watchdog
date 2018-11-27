@@ -13,6 +13,7 @@ steps:
   displayName: 'Install Node.js'
 
 - script: |
+    export IMPORTANT=$(System.DefaultWorkingDirectory)
     npm install
     npm run check
   displayName: 'npm install and check'

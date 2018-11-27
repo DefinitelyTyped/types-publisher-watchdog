@@ -4,7 +4,7 @@ const Gh = require('@octokit/rest')
 var gh = new Gh()
 
 async function main() {
-    console.log(process.env["TF_BUILD"])
+    console.log(process.env["IMPORTANT"])
     gh.authenticate({
         type: "token",
         token: fs.readFileSync('/home/nathansa/api.token', { encoding: 'utf-8' })
