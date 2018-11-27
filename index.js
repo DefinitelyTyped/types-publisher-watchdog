@@ -8,24 +8,22 @@ async function main() {
         type: "token",
         token: fs.readFileSync('/home/nathansa/api.token', { encoding: 'utf-8' })
     })
-    const rows = await recentPrs()
-    recentPackages(rows)
+    const prs = await recentPrs()
+    recentPackages(prs)
     // fs.writeFileSync('/home/nathansa/types-publisher-watchdog/latency.json', JSON.stringify(rows))
 }
 
 /**
  * 1. Only match paths that begin with types/
- * 2. Only match paths that end with a top-level filename
- * 3. Capture the name of the package and the name of the file.
- * 3b. (We don't use the name of the file right now.)
+ * 2. Only match paths that end with index.d.ts; test changes don't cause a republish
+ * 3. Capture the package name
  */
-const THIS_IS_FINE = /^types\/([^\/]+?)\/([^\/]+)$/
+const THIS_IS_FINE = /^types\/([^\/]+?)\/index.d.ts$/
 
 /** returns {Promise<Map<string, Date>>} */
 async function recentPrs() {
     const search = await gh.search.issues({
-        q: "is:pr is:closed repo:DefinitelyTyped/DefinitelyTyped",
-        sort: "updated",
+        q: "is:pr is:merged repo:DefinitelyTyped/DefinitelyTyped",
         order: "desc",
         per_page: 30,
         page: 1
@@ -71,7 +69,9 @@ function recentPackages(prs) {
     for (const [name, mergeDate] of prs) {
         const publishDate = new Date(sh.exec(`npm info @types/${name} time.modified`, { silent : true }).stdout.trim())
         if (mergeDate > publishDate) {
-            console.log(name + ': not published yet; latency so far: ' + (Date.now() - mergeDate.valueOf()))
+            console.log(name + ': not published yet; latency so far: ' + (Date.now() - mergeDate.valueOf()) / 1000)
+            console.log('    merged:' + mergeDate)
+            console.log('    published:' + publishDate)
             sum += Date.now() - mergeDate.valueOf()
         }
         else {
