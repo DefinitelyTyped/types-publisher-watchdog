@@ -10,8 +10,8 @@ async function main() {
     })
     const prs = await recentPrs()
     const averageLatency = recentPackages(prs)
-    if (averageLatency > 1000) {
-        console.log("average types-publisher latency was over 1000 seconds");
+    if (averageLatency > 10000) {
+        console.log("average types-publisher latency was over 10,000 seconds");
         throw new Error();
     }
     // fs.writeFileSync('/home/nathansa/types-publisher-watchdog/latency.json', JSON.stringify(rows))
