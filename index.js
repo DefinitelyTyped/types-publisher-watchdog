@@ -4,6 +4,7 @@ const Gh = require('@octokit/rest')
 var gh = new Gh()
 
 async function main() {
+    console.log(process.env["definitionId"])
     gh.authenticate({
         type: "token",
         token: fs.readFileSync('/home/nathansa/api.token', { encoding: 'utf-8' })
