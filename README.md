@@ -20,18 +20,17 @@ version number from the header, but does not currently.
 
 ## How it works
 
-1. Find the 30 most recently updated DefinitelyTyped PRs.
+1. Find the 30 most recently updated DefinitelyTyped PRs, and the 30
+   most recently opened, of those that are merged.
 2. Record the merge time of each PR, remembering to dedupe multiple
    PRs to the same package.
 3. Find the publish time of each corresponding `@types` package.
 4. Compare the two times, using the current time if the package hasn't
    published yet.
 5. Print the times, plus the average time across all packages.
+6. `npm run check` fails if the average time is over 10,000 seconds,
+   about 2.5 hours.
 
-Eventually, I'll add:
-
-6. Raise an alert if the average time goes over some threshold &mdash;
-probably an hour or two.
 
 ## Limitations
 

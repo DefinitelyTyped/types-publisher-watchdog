@@ -26,45 +26,62 @@ const THIS_IS_FINE = /^types\/([^\/]+?)\/index.d.ts$/
 
 /** returns {Promise<Map<string, Date>>} */
 async function recentPrs() {
-    const search = await gh.search.issues({
+    const searchByCreatedDate = await gh.search.issues({
         q: "is:pr is:merged repo:DefinitelyTyped/DefinitelyTyped",
+        order: "desc",
+        per_page: 30,
+        page: 1
+    })
+    const searchByUpdateDate = await gh.search.issues({
+        q: "is:pr is:merged repo:DefinitelyTyped/DefinitelyTyped",
+        sort: "updated",
         order: "desc",
         per_page: 30,
         page: 1
     })
     /** @type {Map<string, { mergeDate: Date, pr: number }>} */
     const prs = new Map()
-    for (const it of search.data.items) {
-        const mergeDate = (await gh.pulls.get({
-            owner: "DefinitelyTyped",
-            repo: "DefinitelyTyped",
-            number: it.number
-        })).data.merged_at
-        if (mergeDate == null)
-            continue
-        const fileEntries = (await gh.pulls.listFiles({
-            owner: "DefinitelyTyped",
-            repo: "DefinitelyTyped",
-            number: it.number,
-            per_page: 100,
-        })).data
-        /** @type {Set<string>} */
-        const mini = new Set()
-        for (const fileChange of fileEntries) {
-            const m = fileChange.filename.match(THIS_IS_FINE)
-            if (m == null)
-                continue
-            mini.add(m[1])
-        }
-        for (const name of mini) {
-            const date = new Date(mergeDate)
-            const prev = prs.get(name)
-            if (!prev || date > prev.mergeDate) {
-                prs.set(name, { mergeDate: date, pr: it.number })
-            }
-        }
+    for (const it of searchByCreatedDate.data.items) {
+        await addPr(it, prs)
+    }
+    for (const it of searchByUpdateDate.data.items) {
+        await addPr(it, prs)
     }
     return prs
+}
+/**
+ * @param {{ number: number }} item
+ * @param {Map<string, { mergeDate: Date, pr: number }>} prs
+ */
+async function addPr(item, prs) {
+    const mergeDate = (await gh.pulls.get({
+        owner: "DefinitelyTyped",
+        repo: "DefinitelyTyped",
+        number: item.number
+    })).data.merged_at
+    if (mergeDate == null)
+        return
+    const fileEntries = (await gh.pulls.listFiles({
+        owner: "DefinitelyTyped",
+        repo: "DefinitelyTyped",
+        number: item.number,
+        per_page: 100,
+    })).data
+    /** @type {Set<string>} */
+    const mini = new Set()
+    for (const fileChange of fileEntries) {
+        const m = fileChange.filename.match(THIS_IS_FINE)
+        if (m == null)
+            continue
+        mini.add(m[1])
+    }
+    for (const name of mini) {
+        const date = new Date(mergeDate)
+        const prev = prs.get(name)
+        if (!prev || date > prev.mergeDate) {
+            prs.set(name, { mergeDate: date, pr: item.number })
+        }
+    }
 }
 /** @param {Map<string, { mergeDate: Date, pr: number }>} prs */
 function recentPackages(prs) {
