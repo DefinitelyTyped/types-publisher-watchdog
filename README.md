@@ -1,3 +1,13 @@
+## Is types-publisher working right now?
+
+If the badge below is green, then the average latency for the last 30
+PRs is below 10,000
+seconds:
+
+[![Build Status](https://typescript.visualstudio.com/TypeScript/_apis/build/status/sandersn.types-publisher-watchdog)](https://typescript.visualstudio.com/TypeScript/_build/latest?definitionId=13)
+
+## What is it?
+
 types-publisher-watchdog reports how long it takes for types-publisher
 to publish packages to `@types` once a PR has been merged on
 Definitely Typed. Currently it prints the results to the terminal, but
@@ -7,14 +17,6 @@ to the Typescript team members who work on Definitely Typed.
 The watchdog pays attention to two kinds of data from DefinitelyTyped
 PRs: the date and the filenames. It could also use the declared
 version number from the header, but does not currently.
-
-## Is types-publisher working right now?
-
-If the badge below is green, then the average latency for the last 30
-PRs is below 10,000
-seconds:
-
-[![Build Status](https://typescript.visualstudio.com/TypeScript/_apis/build/status/sandersn.types-publisher-watchdog)](https://typescript.visualstudio.com/TypeScript/_build/latest?definitionId=13)
 
 ## How it works
 
