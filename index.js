@@ -32,7 +32,7 @@ async function recentPrs() {
         per_page: 30,
         page: 1
     })
-    /** @type {Map<string, Date>} */
+    /** @type {Map<string, { mergeDate: Date, pr: number }>} */
     const prs = new Map()
     for (const it of search.data.items) {
         const mergeDate = (await gh.pulls.get({
@@ -58,23 +58,26 @@ async function recentPrs() {
         }
         for (const name of mini) {
             const date = new Date(mergeDate)
-            const prevDate = prs.get(name)
-            if (!prevDate || date > prevDate) {
-                prs.set(name, date)
+            const prev = prs.get(name)
+            if (!prev || date > prev.mergeDate) {
+                prs.set(name, { mergeDate: date, pr: it.number })
             }
         }
     }
     return prs
 }
-/** @param {Map<string, Date>} prs */
+/** @param {Map<string, { mergeDate: Date, pr: number }>} prs */
 function recentPackages(prs) {
     /** @type {Array<[string, number]>} */
     let latencies = []
-    for (const [name, mergeDate] of prs) {
+    console.log()
+    console.log()
+    console.log("## Unpublished PRs ##")
+    for (const [name, { mergeDate, pr }] of prs) {
         const publishDate = new Date(sh.exec(`npm info @types/${name} time.modified`, { silent : true }).stdout.trim())
         if (mergeDate > publishDate) {
-            console.log(name + ': not published yet; latency so far: ' + (Date.now() - mergeDate.valueOf()) / 1000)
-            console.log('    merged:' + mergeDate)
+            console.log(`${name}: #${pr} not published yet; latency so far: ${(Date.now() - mergeDate.valueOf()) / 1000}`)
+            console.log('       merged:' + mergeDate)
             console.log('    published:' + publishDate)
             latencies.push([name, Date.now() - mergeDate.valueOf()])
         }
@@ -84,10 +87,14 @@ function recentPackages(prs) {
     }
     latencies.sort(([_n1, l1], [_n2, l2]) => l1 === l2 ? 0 : l1 < l2 ? -1 : 1)
     let sum = 0
+    console.log()
+    console.log()
+    console.log("## Publish latency ##")
     for (const [name, latency] of latencies) {
         sum += latency
         console.log(name + ': ' + (latency / 1000))
     }
+    console.log()
     console.log('Average: ' + (sum / latencies.length / 1000))
     return sum / latencies.length / 1000
 }
