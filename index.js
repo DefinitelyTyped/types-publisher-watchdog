@@ -23,7 +23,7 @@ async function main() {
  */
 const THIS_IS_FINE = /^types\/([^\/]+?)\/index.d.ts$/
 
-/** returns {Promise<Map<string, Date>>} */
+/** @returns {Promise<Map<string, { mergeDate: Date, pr: number }>>} */
 async function recentPrs() {
     const searchByCreatedDate = await gh.search.issues({
         q: "is:pr is:merged repo:DefinitelyTyped/DefinitelyTyped",
