@@ -99,7 +99,7 @@ function recentPackages(prs) {
     console.log("## Unpublished PRs ##")
     for (const [name, { mergeDate, pr }] of prs) {
         const publishDate = new Date(sh.exec(`npm info @types/${name} time.modified`, { silent : true }).stdout.trim())
-        if (mergeDate > publishDate) {
+        if (mergeDate > publishDate || isNaN(publishDate.getTime())) {
             console.log(`${name}: #${pr} not published yet; latency so far: ${(Date.now() - mergeDate.valueOf()) / 1000}`)
             console.log('       merged:' + mergeDate)
             console.log('    published:' + publishDate)
