@@ -14,7 +14,6 @@ async function main() {
         console.log("average types-publisher latency was over 10,000 seconds");
         throw new Error();
     }
-    // fs.writeFileSync('/home/nathansa/types-publisher-watchdog/latency.json', JSON.stringify(rows))
 }
 
 /**
@@ -29,14 +28,14 @@ async function recentPrs() {
     const searchByCreatedDate = await gh.search.issues({
         q: "is:pr is:merged repo:DefinitelyTyped/DefinitelyTyped",
         order: "desc",
-        per_page: 30,
+        per_page: 5,
         page: 1
     })
     const searchByUpdateDate = await gh.search.issues({
         q: "is:pr is:merged repo:DefinitelyTyped/DefinitelyTyped",
         sort: "updated",
         order: "desc",
-        per_page: 30,
+        per_page: 5,
         page: 1
     })
     /** @type {Map<string, { mergeDate: Date, pr: number }>} */
@@ -83,6 +82,14 @@ async function addPr(item, prs) {
         }
     }
 }
+/**
+ * @param {Date} m1
+ * @param {Date} m2
+ */
+function monthSpan(m1, m2) {
+    var diff = m1.getMonth() - m2.getMonth()
+    return diff < 0 ? diff + 12 : diff
+}
 /** @param {Map<string, { mergeDate: Date, pr: number }>} prs */
 function recentPackages(prs) {
     /** @type {Array<[string, number]>} */
@@ -98,8 +105,18 @@ function recentPackages(prs) {
             console.log('    published:' + publishDate)
             latencies.push([name, Date.now() - mergeDate.valueOf()])
         }
+        else if (monthSpan(publishDate, mergeDate) > 1) {
+            console.log(`${name}: published long before merge; probably a rogue edit to #${pr}`)
+            console.log('       merged:' + mergeDate)
+            console.log('    published:' + publishDate)
+        }
         else {
             latencies.push([name, publishDate.valueOf() - mergeDate.valueOf()])
+            if (publishDate.valueOf() - mergeDate.valueOf() > 100000000) {
+                console.log(`${name}: #${pr} very long latency: ${(publishDate.valueOf() - mergeDate.valueOf()) / 1000}`)
+                console.log('       merged:' + mergeDate)
+                console.log('    published:' + publishDate)
+            }
         }
     }
     latencies.sort(([_n1, l1], [_n2, l2]) => l1 === l2 ? 0 : l1 < l2 ? -1 : 1)
