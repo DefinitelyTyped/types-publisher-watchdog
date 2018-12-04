@@ -53,13 +53,14 @@ async function recentPrs() {
  * @param {Map<string, { mergeDate: Date, pr: number }>} prs
  */
 async function addPr(item, prs) {
-    const mergeDate = (await gh.pulls.get({
+    const mergedAt = (await gh.pulls.get({
         owner: "DefinitelyTyped",
         repo: "DefinitelyTyped",
         number: item.number
     })).data.merged_at
-    if (mergeDate == null)
+    if (mergedAt == null)
         return
+    const mergeDate = new Date(mergedAt)
     const fileEntries = (await gh.pulls.listFiles({
         owner: "DefinitelyTyped",
         repo: "DefinitelyTyped",
@@ -67,18 +68,27 @@ async function addPr(item, prs) {
         per_page: 100,
     })).data
     /** @type {Set<string>} */
-    const mini = new Set()
+    const indices = new Set()
     for (const fileChange of fileEntries) {
         const m = fileChange.filename.match(THIS_IS_FINE)
         if (m == null)
             continue
-        mini.add(m[1])
+        const oops = (await gh.repos.listCommits({
+            owner: "DefinitelyTyped",
+            repo: "DefinitelyTyped",
+            path: `types/${m[1]}`
+        }))
+        const commitAuthorDate = new Date(oops.data[0].commit.author.date)
+        if (commitAuthorDate > mergeDate) {
+            console.log(`${m[1]} was updated on ${commitAuthorDate}, after PR ${item.number} was merged on ${mergeDate}. Skipping.`)
+            continue
+        }
+        indices.add(m[1])
     }
-    for (const name of mini) {
-        const date = new Date(mergeDate)
+    for (const name of indices) {
         const prev = prs.get(name)
-        if (!prev || date > prev.mergeDate) {
-            prs.set(name, { mergeDate: date, pr: item.number })
+        if (!prev || mergeDate > prev.mergeDate) {
+            prs.set(name, { mergeDate, pr: item.number })
         }
     }
 }
@@ -96,7 +106,7 @@ function recentPackages(prs) {
     let latencies = []
     console.log()
     console.log()
-    console.log("## Unpublished PRs ##")
+    console.log("## Interesting PRs ##")
     for (const [name, { mergeDate, pr }] of prs) {
         const publishDate = new Date(sh.exec(`npm info @types/${name} time.modified`, { silent : true }).stdout.trim())
         if (mergeDate > publishDate || isNaN(publishDate.getTime())) {
