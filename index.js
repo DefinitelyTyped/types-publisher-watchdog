@@ -9,9 +9,9 @@ async function main() {
         token: process.env["TYPES_PUBLISHER_WATCHDOG_TOKEN"] || ""
     })
     const prs = await recentPrs()
-    const averageLatency = recentPackages(prs)
-    if (averageLatency > 10000) {
-        console.log("average types-publisher latency was over 10,000 seconds");
+    const longestLatency = recentPackages(prs)
+    if (longestLatency > 10000) {
+        console.log("types-publisher's longest unpublished latency was over 10,000 seconds");
         throw new Error();
     }
 }
@@ -73,16 +73,6 @@ async function addPr(item, prs) {
         const m = fileChange.filename.match(THIS_IS_FINE)
         if (m == null)
             continue
-        const oops = (await gh.repos.listCommits({
-            owner: "DefinitelyTyped",
-            repo: "DefinitelyTyped",
-            path: `types/${m[1]}`
-        }))
-        const commitAuthorDate = new Date(oops.data[0].commit.author.date)
-        if (commitAuthorDate > mergeDate) {
-            console.log(`${m[1]} was updated on ${commitAuthorDate}, after PR ${item.number} was merged on ${mergeDate}. Skipping.`)
-            continue
-        }
         indices.add(m[1])
     }
     for (const name of indices) {
@@ -102,44 +92,38 @@ function monthSpan(m1, m2) {
 }
 /** @param {Map<string, { mergeDate: Date, pr: number }>} prs */
 function recentPackages(prs) {
-    /** @type {Array<[string, number]>} */
-    let latencies = []
     console.log()
     console.log()
     console.log("## Interesting PRs ##")
+    let longest = 0
+    let longestName = 'No unpublished PRs found'
     for (const [name, { mergeDate, pr }] of prs) {
         const publishDate = new Date(sh.exec(`npm info @types/${name} time.modified`, { silent : true }).stdout.trim())
         if (mergeDate > publishDate || isNaN(publishDate.getTime())) {
             console.log(`${name}: #${pr} not published yet; latency so far: ${(Date.now() - mergeDate.valueOf()) / 1000}`)
             console.log('       merged:' + mergeDate)
             console.log('    published:' + publishDate)
-            latencies.push([name, Date.now() - mergeDate.valueOf()])
+            const latency = Date.now() - mergeDate.valueOf();
+            if (latency > longest) {
+                longest = latency
+                longestName = name
+            }
         }
         else if (monthSpan(publishDate, mergeDate) > 1) {
             console.log(`${name}: published long before merge; probably a rogue edit to #${pr}`)
             console.log('       merged:' + mergeDate)
             console.log('    published:' + publishDate)
         }
-        else {
-            latencies.push([name, publishDate.valueOf() - mergeDate.valueOf()])
-            if (publishDate.valueOf() - mergeDate.valueOf() > 100000000) {
-                console.log(`${name}: #${pr} very long latency: ${(publishDate.valueOf() - mergeDate.valueOf()) / 1000}`)
-                console.log('       merged:' + mergeDate)
-                console.log('    published:' + publishDate)
-            }
+        else if (publishDate.valueOf() - mergeDate.valueOf() > 100000000) {
+            console.log(`${name}: #${pr} very long latency: ${(publishDate.valueOf() - mergeDate.valueOf()) / 1000}`)
+            console.log('       merged:' + mergeDate)
+            console.log('    published:' + publishDate)
         }
     }
-    latencies.sort(([_n1, l1], [_n2, l2]) => l1 === l2 ? 0 : l1 < l2 ? -1 : 1)
-    let sum = 0
     console.log()
     console.log()
-    console.log("## Publish latency ##")
-    for (const [name, latency] of latencies) {
-        sum += latency
-        console.log(name + ': ' + (latency / 1000))
-    }
-    console.log()
-    console.log('Average: ' + (sum / latencies.length / 1000))
-    return sum / latencies.length / 1000
+    console.log("## Longest publish latency ##")
+    console.log(longestName + ': ' + (longest / 1000))
+    return longest
 }
 main().catch(_ => process.exit(1))
