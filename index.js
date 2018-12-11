@@ -124,6 +124,6 @@ function recentPackages(prs) {
     console.log()
     console.log("## Longest publish latency ##")
     console.log(longestName + ': ' + (longest / 1000))
-    return longest
+    return longest / 1000
 }
 main().catch(_ => process.exit(1))
