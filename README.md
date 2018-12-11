@@ -1,8 +1,7 @@
 ## Is types-publisher working right now?
 
-If the badge below is green, then the average latency for the last 30
-PRs is below 10,000
-seconds:
+If the badge below is green, then no PR has gone unpublished for more
+than 10,000 seconds (about 2.5 hours)::
 
 [![Build Status](https://typescript.visualstudio.com/TypeScript/_apis/build/status/sandersn.types-publisher-watchdog)](https://typescript.visualstudio.com/TypeScript/_build/latest?definitionId=13)
 
@@ -25,12 +24,11 @@ version number from the header, but does not currently.
 2. Record the merge time of each PR, remembering to dedupe multiple
    PRs to the same package.
 3. Find the publish time of each corresponding `@types` package.
-4. Compare the two times, using the current time if the package hasn't
-   published yet.
-5. Print the times, plus the average time across all packages.
-6. `npm run check` fails if the average time is over 10,000 seconds,
+4. If the publish time is before the merge time, record the difference
+   between the merge time and current time.
+5. Find the longest time from step (4) of all the recorded PRs.
+6. `npm run check` fails if the longest time is over 10,000 seconds,
    about 2.5 hours.
-
 
 ## Limitations
 
