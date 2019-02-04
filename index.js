@@ -10,8 +10,8 @@ async function main() {
     })
     const prs = await recentPrs()
     const longestLatency = recentPackages(prs)
-    if (longestLatency > 10000) {
-        console.log("types-publisher's longest unpublished latency was over 10,000 seconds");
+    if (longestLatency > 3600) {
+        console.log("types-publisher's longest unpublished latency was over 1 hour.");
         throw new Error();
     }
 }
