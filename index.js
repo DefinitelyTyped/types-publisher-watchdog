@@ -1,13 +1,11 @@
 const sh = require('shelljs')
 const fs = require('fs')
 const Gh = require('@octokit/rest')
-var gh = new Gh()
+var gh = new Gh({
+    auth: `token ${process.env["TYPES_PUBLISHER_WATCHDOG_TOKEN"] || ""}`
+})
 
 async function main() {
-    gh.authenticate({
-        type: "token",
-        token: process.env["TYPES_PUBLISHER_WATCHDOG_TOKEN"] || ""
-    })
     const prs = await recentPrs()
     const longestLatency = recentPackages(prs)
     if (longestLatency > 3600) {
