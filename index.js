@@ -1,8 +1,7 @@
 const sh = require('shelljs')
-const fs = require('fs')
-const Gh = require('@octokit/rest')
-var gh = new Gh({
-    auth: `token ${process.env["TYPES_PUBLISHER_WATCHDOG_TOKEN"] || ""}`
+const { Octokit } = require('@octokit/rest')
+var gh = new Octokit({
+    auth: process.env["TYPES_PUBLISHER_WATCHDOG_TOKEN"]
 })
 
 async function main() {
@@ -23,13 +22,13 @@ const THIS_IS_FINE = /^types\/([^\/]+?)\/index.d.ts$/
 
 /** @returns {Promise<Map<string, { mergeDate: Date, pr: number, deleted: boolean }>>} */
 async function recentPrs() {
-    const searchByCreatedDate = await gh.search.issues({
+    const searchByCreatedDate = await gh.search.issuesAndPullRequests({
         q: "is:pr is:merged repo:DefinitelyTyped/DefinitelyTyped",
         order: "desc",
         per_page: 5,
         page: 1
     })
-    const searchByUpdateDate = await gh.search.issues({
+    const searchByUpdateDate = await gh.search.issuesAndPullRequests({
         q: "is:pr is:merged repo:DefinitelyTyped/DefinitelyTyped",
         sort: "updated",
         order: "desc",
@@ -54,7 +53,7 @@ async function addPr(item, prs) {
     const mergedAt = (await gh.pulls.get({
         owner: "DefinitelyTyped",
         repo: "DefinitelyTyped",
-        number: item.number
+        pull_number: item.number
     })).data.merged_at
     if (mergedAt == null)
         return
@@ -62,7 +61,7 @@ async function addPr(item, prs) {
     const fileEntries = (await gh.pulls.listFiles({
         owner: "DefinitelyTyped",
         repo: "DefinitelyTyped",
-        number: item.number,
+        pull_number: item.number,
         per_page: 100,
     })).data
     /** @type {Set<string>} */
@@ -74,7 +73,7 @@ async function addPr(item, prs) {
         if (m == null)
             continue
         packages.add(m[1])
-        if (fileChange.status === "D")
+        if (fileChange.status === "D" || fileChange.status === "removed")
             deleteds.add(m[1])
     }
     for (const name of packages) {
@@ -100,7 +99,7 @@ function recentPackages(prs) {
     let longest = 0
     let longestName = 'No unpublished PRs found'
     for (const [name, { mergeDate, pr, deleted }] of prs) {
-        const { deprecated, publishDate } = parseNpmInfo(sh.exec(`npm info @types/${name} time.modified deprecated`, { silent : true }).stdout)
+        const { deprecated, publishDate } = parseNpmInfo(sh.exec(`npm info @types/${name} time.modified deprecated`, { silent : true }).stdout.toString())
         if (mergeDate > publishDate || isNaN(publishDate.getTime()) || deprecated !== deleted) {
             console.log(`${name}: #${pr} not published yet; latency so far: ${(Date.now() - mergeDate.valueOf()) / 1000}`)
             console.log('       merged:' + mergeDate)
@@ -138,4 +137,7 @@ function parseNpmInfo(info) {
         return { publishDate: new Date(info.trim()), deprecated: false }
     }
 }
-main().catch(_ => process.exit(1))
+main().catch(error => {
+    console.error(error && (error.stack || error.message || error))
+    process.exit(1)
+})

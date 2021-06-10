@@ -10,7 +10,7 @@
   "author": "Nathan Shively-Sanders (@sandersn)",
   "license": "ISC",
   "dependencies": {
-    "@octokit/rest": "^16.0.3",
+    "@octokit/rest": "^18.5.6",
     "@types/shelljs": "^0.8.0",
     "shelljs": "^0.8.3"
   }
