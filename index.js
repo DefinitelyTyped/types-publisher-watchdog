@@ -7,8 +7,8 @@ var gh = new Octokit({
 async function main() {
     const prs = await recentPrs()
     const longestLatency = recentPackages(prs)
-    if (longestLatency > 3600) {
-        console.log("types-publisher's longest unpublished latency was over 1 hour.");
+    if (longestLatency > 5400) {
+        console.log("types-publisher's longest unpublished latency was over 1.5 hour.");
         throw new Error();
     }
 }
