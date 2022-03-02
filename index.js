@@ -22,12 +22,14 @@ const THIS_IS_FINE = /^types\/([^\/]+?)\/index.d.ts$/
 
 /** @returns {Promise<Map<string, { mergeDate: Date, pr: number, deleted: boolean }>>} */
 async function recentPrs() {
+    console.log('search for 5 most recently created PRs')
     const searchByCreatedDate = await gh.search.issuesAndPullRequests({
         q: "is:pr is:merged repo:DefinitelyTyped/DefinitelyTyped",
         order: "desc",
         per_page: 5,
         page: 1
     })
+    console.log('search for 5 most recently updated PRs')
     const searchByUpdateDate = await gh.search.issuesAndPullRequests({
         q: "is:pr is:merged repo:DefinitelyTyped/DefinitelyTyped",
         sort: "updated",
@@ -50,6 +52,7 @@ async function recentPrs() {
  * @param {Map<string, { mergeDate: Date, pr: number, deleted: boolean }>} prs
  */
 async function addPr(item, prs) {
+    console.log('get merge_at date for PR', item.number)
     const mergedAt = (await gh.pulls.get({
         owner: "DefinitelyTyped",
         repo: "DefinitelyTyped",
@@ -58,6 +61,7 @@ async function addPr(item, prs) {
     if (mergedAt == null)
         return
     const mergeDate = new Date(mergedAt)
+    console.log('list first 100 files for PR', item.number)
     const fileEntries = (await gh.pulls.listFiles({
         owner: "DefinitelyTyped",
         repo: "DefinitelyTyped",
