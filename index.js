@@ -18,7 +18,7 @@ async function main() {
  * 2. Only match paths that end with index.d.ts; test changes don't cause a republish
  * 3. Capture the package name
  */
-const THIS_IS_FINE = /^types\/([^\/]+?)\/index.d.ts$/
+const packageNameFromIndexDts = /^types\/([^\/]+?)\/index.d.ts$/
 
 /** @returns {Promise<Map<string, { mergeDate: Date, pr: number, deleted: boolean }>>} */
 async function recentPrs() {
@@ -72,13 +72,20 @@ async function addPr(item, prs) {
     const packages = new Set()
     /** @type {Set<string>} */
     const deleteds = new Set()
+    const editsNotNeededPackages = !!fileEntries.find(e => e.filename.match('notNeededPackages.json'))
     for (const fileChange of fileEntries) {
-        const m = fileChange.filename.match(THIS_IS_FINE)
-        if (m == null)
+        const packageName = fileChange.filename.match(packageNameFromIndexDts)
+        if (packageName == null)
             continue
-        packages.add(m[1])
-        if (fileChange.status === "D" || fileChange.status === "removed")
-            deleteds.add(m[1])
+        if (fileChange.status === "D" || fileChange.status === "removed") {
+            if (editsNotNeededPackages) {
+                deleteds.add(packageName[1])
+                packages.add(packageName[1])
+            }
+        }
+        else {
+            packages.add(packageName[1])
+        }
     }
     for (const name of packages) {
         const prev = prs.get(name)
