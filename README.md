@@ -3,7 +3,7 @@
 If the badge below is green, then no PR has gone unpublished for more
 than 10,000 seconds (about 2.5 hours)::
 
-[![Build Status](https://typescript.visualstudio.com/TypeScript/_apis/build/status/sandersn.types-publisher-watchdog)](https://typescript.visualstudio.com/TypeScript/_build/latest?definitionId=13)
+[![Build Status](https://dev.azure.com/definitelytyped/DefinitelyTyped/_apis/build/status/DefinitelyTyped.types-publisher-watchdog)](https://dev.azure.com/definitelytyped/DefinitelyTyped/_build?definitionId=5)
 
 ## What is it?
 
@@ -40,5 +40,3 @@ updates to old versions are skipped. It also means that I don't
 inspect the DefinitelyTyped header so I can compare the npm version. I
 just assume that npm's latest matches the change. I think this is
 usually true, but it may not be.
-
-
